@@ -1,0 +1,10 @@
+package com.whoiszxl.blockchain.model;
+
+/**
+ * 交易记录
+ * @author Administrator
+ *
+ */
+public class Transaction {
+
+}
