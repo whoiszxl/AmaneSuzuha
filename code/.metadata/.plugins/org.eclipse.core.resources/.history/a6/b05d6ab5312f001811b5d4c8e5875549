@@ -1,0 +1,6 @@
+package com.whoiszxl.blockchain.security;
+
+public class Coder {
+	public static final String KEY_SHA = "SHA";
+	public static final String KEY_MD5 = "MD5";
+}

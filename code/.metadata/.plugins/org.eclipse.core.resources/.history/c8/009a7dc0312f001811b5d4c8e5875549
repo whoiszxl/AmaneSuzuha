@@ -1,0 +1,11 @@
+package com.whoiszxl.blockchain.security;
+
+/**
+ * 基础加密组件
+ * @author whoiszxl
+ *
+ */
+public class Coder {
+	public static final String KEY_SHA = "SHA";
+	public static final String KEY_MD5 = "MD5";
+}

@@ -1,0 +1,14 @@
+package com.whoiszxl.blockchain.model;
+
+/**
+ * 交易输出
+ * @author whoiszxl
+ *
+ */
+public class TransactionOutput {
+
+	/**
+	 * 交易金额
+	 */
+	private int value;
+}
