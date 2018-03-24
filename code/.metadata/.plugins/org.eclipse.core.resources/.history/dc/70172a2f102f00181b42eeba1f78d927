@@ -1,0 +1,10 @@
+package com.whoiszxl.blockchain.security;
+
+/**
+ * hash加密工具类
+ * @author Administrator
+ *
+ */
+public class CryptoUtil {
+
+}

@@ -1,0 +1,5 @@
+package com.whoiszxl.blockchain.security;
+
+public class CryptoUtil {
+
+}

@@ -1,0 +1,15 @@
+package com.whoiszxl.blockchain;
+
+import org.junit.Test;
+
+public class BlockChainTest {
+	
+	/**
+	 * 测试区块挖矿
+	 * @throws Exception
+	 */
+	@Test
+	public void testBlockMine() throws Exception {
+		
+	}
+}

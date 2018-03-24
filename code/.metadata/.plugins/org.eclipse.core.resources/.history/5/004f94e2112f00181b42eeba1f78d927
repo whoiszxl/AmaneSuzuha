@@ -1,0 +1,37 @@
+package com.whoiszxl.blockchain.security;
+
+import java.security.MessageDigest;
+
+/**
+ * hash加密工具类
+ * @author whoiszxl
+ *
+ */
+public class CryptoUtil {
+
+	private CryptoUtil() {}
+	
+	public static String SHA256(String str) {
+		MessageDigest messageDigest;
+		String encodeStr = "";
+		
+		try {
+			messageDigest = MessageDigest.getInstance("SHA-256");
+			messageDigest.update(str.getBytes("UTF-8"));
+			encodeStr = by
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+	}
+	
+	
+	
+	
+	private static String byte2Hex(byte[] bytes) {
+		StringBuilder builder = new StringBuilder();
+		String temp;
+		for (int i = 0; i < bytes.length; i++) {
+			temp = Integer.toHexString(bytes[i] & 0xFF);
+		}
+	}
+}

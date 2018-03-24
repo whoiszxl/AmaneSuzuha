@@ -1,0 +1,11 @@
+package com.whoiszxl.blockchain;
+
+
+
+public class BlockChainTest {
+	
+	
+	public void testname() throws Exception {
+		
+	}
+}
