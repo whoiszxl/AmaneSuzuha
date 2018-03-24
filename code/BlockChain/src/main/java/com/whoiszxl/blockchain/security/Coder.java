@@ -51,6 +51,7 @@ public class Coder {
 	 * @throws Exception
 	 */
 	public static String encryptBASE64(byte[] key) throws Exception {
+		//通过jdk内部的加密类进行base64加密
 		return (new BASE64Encoder()).encodeBuffer(key);
 	}
 

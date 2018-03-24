@@ -208,15 +208,16 @@ public abstract class RSACoder extends Coder {
 	}
 
 	/**
-	 * 取得公钥
+	 * 取得一个经过base64加密的公钥
 	 * 
-	 * @param keyMap
-	 * @return
+	 * @param keyMap 存有公钥私钥的Map对象
+	 * @return 经过base64加密的公钥
 	 * @throws Exception
 	 */
 	public static String getPublicKey(Map<String, Object> keyMap) throws Exception {
+		//从传入的map中取出公钥
 		Key key = (Key) keyMap.get(PUBLIC_KEY);
-
+		//返回一个经过base64加密的公钥
 		return encryptBASE64(key.getEncoded());
 	}
 
@@ -227,19 +228,22 @@ public abstract class RSACoder extends Coder {
 	 * @throws Exception
 	 */
 	public static Map<String, Object> initKey() throws Exception {
+		//获取到RSA的实例
 		KeyPairGenerator keyPairGen = KeyPairGenerator.getInstance(KEY_ALGORITHM);
+		//初始化大小
 		keyPairGen.initialize(1024);
 
+		//生成秘钥对
 		KeyPair keyPair = keyPairGen.generateKeyPair();
 
-		// 公钥
+		// 获取公钥
 		RSAPublicKey publicKey = (RSAPublicKey) keyPair.getPublic();
 
-		// 私钥
+		// 获取私钥
 		RSAPrivateKey privateKey = (RSAPrivateKey) keyPair.getPrivate();
 
+		//创建一个map对象存入公钥私钥并返回
 		Map<String, Object> keyMap = new HashMap<String, Object>(2);
-
 		keyMap.put(PUBLIC_KEY, publicKey);
 		keyMap.put(PRIVATE_KEY, privateKey);
 		return keyMap;
