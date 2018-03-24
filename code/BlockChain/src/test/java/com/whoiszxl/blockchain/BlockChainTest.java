@@ -8,6 +8,9 @@ import org.junit.Test;
 import com.alibaba.fastjson.JSON;
 import com.whoiszxl.blockchain.model.Block;
 import com.whoiszxl.blockchain.model.Transaction;
+import com.whoiszxl.blockchain.model.TransactionInput;
+import com.whoiszxl.blockchain.model.TransactionOutput;
+import com.whoiszxl.blockchain.model.Wallet;
 import com.whoiszxl.blockchain.security.CryptoUtil;
 
 public class BlockChainTest {
@@ -34,10 +37,21 @@ public class BlockChainTest {
 		List<Transaction> transactions = new ArrayList<Transaction>();
 		Transaction t1 = new Transaction();
 		Transaction t2 = new Transaction();
-		Transaction t3 = new Transaction();
 		transactions.add(t1);
 		transactions.add(t2);
-		transactions.add(t3);
+		
+		
+		Wallet walletSender = Wallet.generateWallet();
+		Wallet walletReciptent = Wallet.generateWallet();
+		
+		TransactionInput txIn = new TransactionInput(t2.getId(), 10, null, walletSender.getPublicKey());
+		TransactionOutput txOut = new TransactionOutput(10, walletReciptent.getHashPubKey());
+		
+		Transaction tx3 = new Transaction(CryptoUtil.UUID(), txIn, txOut);
+		
+		//假设t2之前已经被记录到区块
+		tx3.sign(walletSender.getPrivateKey(), t2);
+		transactions.add(tx3);
 		
 		//创建一个系统奖励的交易
 		Transaction sysTran = new Transaction();
