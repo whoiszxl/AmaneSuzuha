@@ -2,8 +2,10 @@ package com.whoiszxl.blockchain.service;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import com.alibaba.fastjson.JSON;
 import com.whoiszxl.blockchain.model.Block;
@@ -279,6 +281,67 @@ public class BlockService {
 	}
 	
 	
+	/**
+	 * 创建一个钱包并存入全钱包节点集合
+	 * @return 创建的钱包对象
+	 */
+	public Wallet createWallet() {
+		Wallet wallet = Wallet.generateWallet();
+		String address = wallet.getAddress();
+		myWalletMap.put(address, wallet);
+		return wallet;
+	}
+	
+	
+	/**
+	 * 获取钱包余额
+	 * @param address 钱包地址
+	 * @return 钱包余额
+	 */
+	public int getWalletBalance(String address) {
+		//获取到未花费交易集合
+		List<Transaction> unspentTxs = findUnspentTransactions(address);
+		int balance = 0;
+		//遍历,将output的金额累加到balance
+		for (Transaction transaction : unspentTxs) {
+			balance += transaction.getTxOut().getValue();
+		}
+		return balance;
+	}
+	
+	
+	private List<Transaction> findUnspentTransactions(String address) {
+		List<Transaction> unspentTxs = new ArrayList<Transaction>();
+		Set<String> spentTxs = new HashSet<String>();
+		for (Transaction tx : allTransactions) {
+			if(tx.coinbaseTx()){
+				continue;
+			}
+			//转出交易是已花费交易
+			if(address.equals(Wallet.getAddress(tx.getTxIn().getPublicKey()))){
+				spentTxs.add(tx.getTxIn().getTxId());
+			}
+		}
+		
+		/**
+		 * allTransactions包含了未添加到区块中的交易
+		 * blockChain未包含未添加到区块的交易
+		 * 所以判断的时候需要将添加到区块的txId和未添加到区块的txInputId对比
+		 * 要未添加到区块的上一笔txId不和添加到区块的txInputId一样才行
+		 */
+		for (Block block : blockChain) {
+			List<Transaction> transactions = block.getTransactions();
+			for (Transaction tx : transactions) {
+				if(address.equals(CryptoUtil.MD5(tx.getTxOut().getPublicKeyHash()))){
+					if(!spentTxs.contains(tx.getId())){
+						unspentTxs.add(tx);
+					}
+				}
+			}
+		}
+		
+		return unspentTxs;
+	}
 
 	public List<Block> getBlockChain() {
 		return blockChain;
