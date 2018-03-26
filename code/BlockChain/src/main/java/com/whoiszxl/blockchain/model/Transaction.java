@@ -83,6 +83,7 @@ public class Transaction {
 			return true;
 		}
 
+		//上一笔交易的id是否等于当前交易的input中的id
 		if (!prevTx.getId().equals(txIn.getTxId())) {
 			System.err.println("验证交易签名失败：当前交易输入引用的前一笔交易与传入的前一笔交易不匹配");
 		}

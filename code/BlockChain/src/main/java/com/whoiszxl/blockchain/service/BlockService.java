@@ -8,6 +8,8 @@ import java.util.Map;
 import com.alibaba.fastjson.JSON;
 import com.whoiszxl.blockchain.model.Block;
 import com.whoiszxl.blockchain.model.Transaction;
+import com.whoiszxl.blockchain.model.TransactionInput;
+import com.whoiszxl.blockchain.model.TransactionOutput;
 import com.whoiszxl.blockchain.model.Wallet;
 import com.whoiszxl.blockchain.security.CryptoUtil;
 
@@ -66,7 +68,12 @@ public class BlockService {
 	 * @return 是否添加成功
 	 */
 	public boolean addBlock(Block newBlock) {
-		
+		if(isValidNewBlock(newBlock, getLatestBlock())) {
+			blockChain.add(newBlock);
+			//新区块的交易需要加入到已打包的交易集合里面去
+			packedTransactions.addAll(newBlock.getTransactions());
+			return true;
+		}
 		return false;
 	}
 	
@@ -84,10 +91,28 @@ public class BlockService {
 			System.out.println("新区块的前一个区块hash验证不通过");
 			return false;
 		}else {
-			//验证
+			//验证新区块hash值的正确性
+			String hash = calculateHash(newBlock.getPreviousHash(), newBlock.getTransactions(), newBlock.getNonce());
+			if(!hash.equals(newBlock.getHash())){
+				System.out.println("新区块的hash无效: " + hash + " " + newBlock.getHash());
+				return false;
+			}
+			if(!isValidHash(newBlock.getHash())) {
+				return false;
+			}
 		}
 		
-		
+		return true;
+	}
+	
+	/**
+	 * 验证hash值是否满足系统条件
+	 * 
+	 * @param hash
+	 * @return
+	 */
+	private boolean isValidHash(String hash) {
+		return hash.startsWith("0000");
 	}
 	
 	/**
@@ -103,15 +128,155 @@ public class BlockService {
 	}
 	
 	
+	/**
+	 * 验证整个区块链是否有效,通过循环从0,1开始遍历判断下去
+	 * @param chain 整个区块链
+	 * @return 是否有效
+	 */
+	private boolean isValidChain(List<Block> chain) {
+		Block block = null;
+		Block lastBlock = chain.get(0);
+		int currentIndex = 1;
+		
+		while(currentIndex < chain.size()) {
+			block = chain.get(currentIndex);
+			
+			if(!isValidNewBlock(block, lastBlock)) {
+				return false;
+			}
+			
+			lastBlock = block;
+			currentIndex++;
+		}
+		return true;
+	}
+	
+	/**
+	 * 替换本地区块链
+	 * @param newBlocks
+	 */
+	public void replaceChain(List<Block> newBlocks) {
+		//需要新区块链有效并且新区块链区块数量大于当前区块链
+		if(isValidChain(newBlocks) && newBlocks.size() > blockChain.size()){
+			blockChain = newBlocks;
+			
+			//更新已打包交易集合
+			packedTransactions.clear();
+			//遍历出新区块链的所有交易,添加到packedTransactions中
+			blockChain.forEach(block -> {
+				packedTransactions.addAll(block.getTransactions());
+			});
+		}else {
+			System.out.println("接收的新区块链无效哦");
+		}
+	}
+	
+	/**
+	 * 创建一个新的区块并添加到链中
+	 * @return
+	 */
+	private Block createNewBlock(int nonce, String previousHash, String hash, List<Transaction> blockTxs) {
+		Block block = new Block(blockChain.size()+1, hash, System.currentTimeMillis(), blockTxs, nonce, previousHash);
+		if(addBlock(block)) {
+			return block;
+		}
+		return null;
+	}
+	
+	/**
+	 * 挖矿
+	 * @param 要挖到哪个钱包地址
+	 * @return
+	 */
+	public Block mine(String toAddress) {
+		//创建系统奖励的交易
+		allTransactions.add(newCoinbaseTx(toAddress));
+		//取出已打包进区块的交易
+		List<Transaction> blockTxs = new ArrayList<Transaction>(allTransactions);
+		blockTxs.removeAll(packedTransactions);
+		verifyAllTransactions(blockTxs);
+		
+		String newBlockHash = "";
+		int nonce = 0;
+		long start = System.currentTimeMillis();
+		System.out.println("开始挖矿");
+		while(true) {
+			//计算新区块的hash值
+			newBlockHash = calculateHash(getLatestBlock().getHash(), blockTxs, nonce);
+			//校验hash值
+			if(isValidHash(newBlockHash)){
+				System.out.println("挖矿完成，正确的hash值：" + newBlockHash);
+				System.out.println("挖矿耗费时间：" + (System.currentTimeMillis() - start) + "ms");
+				break;
+			}
+			System.out.println("错误的hash值:" + newBlockHash);
+			nonce++;
+		}
+		
+		//创建新区块
+		Block block = createNewBlock(nonce, getLatestBlock().getHash(), newBlockHash, blockTxs);
+		return block;
+	}
 	
 	
+	/**
+	 * 验证所有交易是否有效，非常重要的一步，可以防止双花
+	 * @param blockTxs
+	 */
+	private void verifyAllTransactions(List<Transaction> blockTxs) {
+		List<Transaction> invalidTxs = new ArrayList<>();
+		for (Transaction tx : blockTxs) {
+			if(!verifyTransaction(tx)){
+				invalidTxs.add(tx);
+			}
+		}
+		blockTxs.removeAll(invalidTxs);
+		//去除无效交易
+		allTransactions.removeAll(invalidTxs);
+	}
+	
+	/**
+	 * 通过交易的id找到这笔交易
+	 * @param id 交易的id
+	 * @return 这笔交易
+	 */
+	private Transaction findTransaction(String id) {
+		for (Transaction tx : allTransactions) {
+			if(id.equals(tx.getId())){
+				return tx;
+			}
+		}
+		return null;
+	} 
 	
 	
+	/**
+	 * 验证这笔交易是否有效
+	 * @param tx
+	 * @return
+	 */
+	private boolean verifyTransaction(Transaction tx) {
+		if(tx.coinbaseTx()) {
+			return true;
+		}
+		//txInpt中的id为上一笔交易的id,获取到上一笔交易的id
+		Transaction prevTx = findTransaction(tx.getTxIn().getTxId());
+		//使用当前交易的verify验证交易是否有效
+		return tx.verify(prevTx);
+	}
 	
-	
-	
-	
-	
+	/**
+	 * 生成一个区块奖励的交易
+	 * @param toAddress 奖励存到哪个钱包地址
+	 * @return 包含input,output的交易
+	 */
+	public Transaction newCoinbaseTx(String toAddress) {
+		TransactionInput txIn = new TransactionInput("0", -1, null, null);
+		Wallet wallet = myWalletMap.get(toAddress);
+		//指定生成区块的奖励为10BTC
+		TransactionOutput txOut = new TransactionOutput(10, wallet.getHashPubKey());
+		return new Transaction(CryptoUtil.UUID(), txIn, txOut);
+	}
 	
 	
 
