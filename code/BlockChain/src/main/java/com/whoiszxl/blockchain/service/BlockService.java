@@ -221,6 +221,40 @@ public class BlockService {
 	}
 	
 	
+	
+	/**
+	 * 创建交易
+	 * @param fromAddress 发送方
+	 * @param toAddress 接收方
+	 * @param amount 金额
+	 * @return 创建后的交易
+	 */
+	public Transaction createTransaction(Wallet senderWallet, Wallet recipientWallet, int amount) {
+		//查询到发送方的所有未话费交易
+		List<Transaction> unspentTxs = findUnspentTransactions(senderWallet.getAddress());
+		Transaction prevTx = null;
+		for (Transaction transaction : unspentTxs) {
+			//TODO 找零机制
+			if(transaction.getTxOut().getValue() == amount) {
+				prevTx = transaction;
+				break;
+			}
+		}
+		
+		if(prevTx == null) {
+			return null;
+		}
+		
+		TransactionInput txIn = new TransactionInput(prevTx.getId(), amount, null, senderWallet.getPublicKey());
+		TransactionOutput txOut = new TransactionOutput(amount, recipientWallet.getHashPubKey());
+		Transaction transaction = new Transaction(CryptoUtil.UUID(), txIn, txOut);
+		transaction.sign(senderWallet.getPrivateKey(), prevTx);
+		allTransactions.add(transaction);
+		return transaction;
+	}
+	
+	
+	
 	/**
 	 * 验证所有交易是否有效，非常重要的一步，可以防止双花
 	 * @param blockTxs
