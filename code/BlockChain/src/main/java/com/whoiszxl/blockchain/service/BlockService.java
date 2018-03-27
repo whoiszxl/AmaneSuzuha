@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.springframework.stereotype.Service;
+
 import com.alibaba.fastjson.JSON;
 import com.whoiszxl.blockchain.model.Block;
 import com.whoiszxl.blockchain.model.Transaction;
@@ -21,6 +23,7 @@ import com.whoiszxl.blockchain.security.CryptoUtil;
  * @author whoiszxl
  *
  */
+@Service
 public class BlockService {
 
 	/**
