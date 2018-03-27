@@ -232,6 +232,7 @@ public class BlockService {
 	public Transaction createTransaction(Wallet senderWallet, Wallet recipientWallet, int amount) {
 		//查询到发送方的所有未话费交易
 		List<Transaction> unspentTxs = findUnspentTransactions(senderWallet.getAddress());
+		//暂未实现找零, 遍历所有未花费交易然后判断转账金额是否和其中一笔对得上
 		Transaction prevTx = null;
 		for (Transaction transaction : unspentTxs) {
 			//TODO 找零机制
@@ -245,6 +246,7 @@ public class BlockService {
 			return null;
 		}
 		
+		//创建tx交易,然后签名,存入所有交易集合中
 		TransactionInput txIn = new TransactionInput(prevTx.getId(), amount, null, senderWallet.getPublicKey());
 		TransactionOutput txOut = new TransactionOutput(amount, recipientWallet.getHashPubKey());
 		Transaction transaction = new Transaction(CryptoUtil.UUID(), txIn, txOut);

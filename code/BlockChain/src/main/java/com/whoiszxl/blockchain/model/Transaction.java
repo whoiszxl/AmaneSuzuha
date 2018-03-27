@@ -38,18 +38,21 @@ public class Transaction {
 	/**
 	 * 用私钥生成交易签名
 	 * 
-	 * @param privateKey
-	 * @param prevTx
+	 * @param privateKey 发送方私钥
+	 * @param prevTx 未花费对象
 	 */
 	public void sign(String privateKey, Transaction prevTx) {
+		//判断是否是奖励交易
 		if (coinbaseTx()) {
 			return;
 		}
 
+		// 判断上一笔未花费交易的id是否等于当前交易
 		if (!prevTx.getId().equals(txIn.getTxId())) {
 			System.err.println("交易签名失败：当前交易输入引用的前一笔交易与传入的前一笔交易不匹配");
 		}
 
+		//克隆交易
 		Transaction txClone = cloneTx();
 		txClone.getTxIn().setPublicKey(prevTx.getTxOut().getPublicKeyHash());
 		String sign = "";
@@ -67,6 +70,7 @@ public class Transaction {
 	 * @return
 	 */
 	public Transaction cloneTx() {
+		//克隆input,传入当前交易输入的id,和value
 		TransactionInput transactionInput = new TransactionInput(txIn.getTxId(), txIn.getValue(), null, null);
 		TransactionOutput transactionOutput = new TransactionOutput(txOut.getValue(), txOut.getPublicKeyHash());
 		return new Transaction(id, transactionInput, transactionOutput);
