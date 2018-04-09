@@ -32,7 +32,7 @@ public class Transaction {
 	 * @return
 	 */
 	public boolean coinbaseTx() {
-		return txIn.getTxId().equals(0) && getTxIn().getValue() == -1;
+		return txIn.getTxId().equals("0") && getTxIn().getValue() == -1;
 	}
 	
 	/**
@@ -86,7 +86,7 @@ public class Transaction {
 		if (coinbaseTx()) {
 			return true;
 		}
-
+		System.out.println("是否能获取到上一笔交易:"+JSON.toJSONString(prevTx));
 		//上一笔交易的id是否等于当前交易的input中的id
 		if (!prevTx.getId().equals(txIn.getTxId())) {
 			System.err.println("验证交易签名失败：当前交易输入引用的前一笔交易与传入的前一笔交易不匹配");

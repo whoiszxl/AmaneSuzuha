@@ -20,6 +20,8 @@ import com.whoiszxl.blockchain.p2p.Message;
 import com.whoiszxl.blockchain.p2p.P2PService;
 import com.whoiszxl.blockchain.service.BlockService;
 
+import io.swagger.annotations.ApiOperation;
+
 /**
  * 区块链对外提供服务接口控制器
  * @author whoiszxl
@@ -38,6 +40,7 @@ public class ChainController {
 	 * 查询区块链
 	 * @return
 	 */
+	@ApiOperation(value="查询区块链")
 	@GetMapping("/chain")
 	@ResponseBody
 	public List<Block> chain() {
@@ -50,6 +53,7 @@ public class ChainController {
 	 * 创建钱包
 	 * @return
 	 */
+	@ApiOperation(value="创建钱包")
 	@PostMapping("/wallet/create")
 	@ResponseBody
 	public Result createWallet() {
@@ -67,6 +71,7 @@ public class ChainController {
 	 * 查询钱包
 	 * @return
 	 */
+	@ApiOperation(value="查询钱包")
 	@GetMapping("/wallet/get")
 	@ResponseBody
 	public Result getWallet() {
@@ -78,6 +83,7 @@ public class ChainController {
 	 * 挖矿
 	 * @return
 	 */
+	@ApiOperation(value="挖矿")
 	@PostMapping("/mine")
 	@ResponseBody
 	public Result mine(String address) {
@@ -104,6 +110,7 @@ public class ChainController {
 	 * 转账交易
 	 * @return
 	 */
+	@ApiOperation(value="转账交易")
 	@PostMapping("/transactions/new")
 	@ResponseBody
 	public Result newtransaction(String sender, String recipient, int amount) {
@@ -140,6 +147,7 @@ public class ChainController {
 	 * 查询未打包交易
 	 * @return
 	 */
+	@ApiOperation(value="查询未打包交易")
 	@GetMapping("/transactions/unpacked/get")
 	@ResponseBody
 	public Result getUnpackedTransaction() {
@@ -154,6 +162,7 @@ public class ChainController {
 	 * 查询钱包余额
 	 * @return
 	 */
+	@ApiOperation(value="查询钱包余额")
 	@GetMapping("/wallet/balance/get")
 	@ResponseBody
 	public Result getWalletBalance(String address) {
@@ -165,6 +174,7 @@ public class ChainController {
 	 * 查询所有socket节点
 	 * @return
 	 */
+	@ApiOperation(value="查询所有socket节点")
 	@GetMapping("/peers")
 	@ResponseBody
 	public Result peers() {

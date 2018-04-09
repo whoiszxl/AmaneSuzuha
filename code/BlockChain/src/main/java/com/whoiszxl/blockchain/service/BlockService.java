@@ -196,9 +196,10 @@ public class BlockService {
 	public Block mine(String toAddress) {
 		//创建系统奖励的交易
 		allTransactions.add(newCoinbaseTx(toAddress));
-		//取出已打包进区块的交易
+		//获取到所有交易,并移除已打包的交易,获取到未打包的交易
 		List<Transaction> blockTxs = new ArrayList<Transaction>(allTransactions);
 		blockTxs.removeAll(packedTransactions);
+		//验证这个未打包交易是否有效
 		verifyAllTransactions(blockTxs);
 		
 		String newBlockHash = "";
@@ -265,14 +266,18 @@ public class BlockService {
 	 * @param blockTxs
 	 */
 	private void verifyAllTransactions(List<Transaction> blockTxs) {
+		//创建一个无效交易集合
 		List<Transaction> invalidTxs = new ArrayList<>();
+		//遍历未打包交易集合,验证交易是否有效
 		for (Transaction tx : blockTxs) {
 			if(!verifyTransaction(tx)){
+				//无效就添加到无效集合中
 				invalidTxs.add(tx);
 			}
 		}
+		//未打包交易再去移除无效交易
 		blockTxs.removeAll(invalidTxs);
-		//去除无效交易
+		//所有交易也去除无效交易
 		allTransactions.removeAll(invalidTxs);
 	}
 	
@@ -297,6 +302,8 @@ public class BlockService {
 	 * @return
 	 */
 	private boolean verifyTransaction(Transaction tx) {
+		System.out.println("是否能获取到需要验证的交易:"+JSON.toJSONString(tx));
+		//如果是奖励交易,直接返回true
 		if(tx.coinbaseTx()) {
 			return true;
 		}
@@ -312,10 +319,13 @@ public class BlockService {
 	 * @return 包含input,output的交易
 	 */
 	public Transaction newCoinbaseTx(String toAddress) {
+		//创建一个交易输入,因为是奖励的所以没数据
 		TransactionInput txIn = new TransactionInput("0", -1, null, null);
+		//从钱包集合中获取到这个地址的钱包
 		Wallet wallet = myWalletMap.get(toAddress);
-		//指定生成区块的奖励为10BTC
+		//创建指定生成区块的奖励为10BTC
 		TransactionOutput txOut = new TransactionOutput(10, wallet.getHashPubKey());
+		//返回这一笔奖励交易
 		return new Transaction(CryptoUtil.UUID(), txIn, txOut);
 	}
 	
