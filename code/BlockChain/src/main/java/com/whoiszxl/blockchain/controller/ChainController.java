@@ -41,7 +41,7 @@ public class ChainController {
 	@GetMapping("/chain")
 	@ResponseBody
 	public List<Block> chain() {
-		
+		//直接调用service获取所有的区块
 		return blockService.getBlockChain();
 	}
 	
@@ -53,8 +53,11 @@ public class ChainController {
 	@PostMapping("/wallet/create")
 	@ResponseBody
 	public Result createWallet() {
+		//调用服务创建一个钱包
 		Wallet wallet = blockService.createWallet();
+		//将只包含公钥的钱包创建一个数组
 		Wallet[] wallets = {new Wallet(wallet.getPublicKey())};
+		//通过p2p广播将只包含公钥的钱包广播出去
 		String msg = JSON.toJSONString(new Message(P2PService.RESPONSE_WALLET, JSON.toJSONString(wallets)));
 		p2pService.broatcast(msg);
 		return Result.Success("创建钱包成功,钱包地址为:" + wallet.getAddress());
@@ -67,6 +70,7 @@ public class ChainController {
 	@GetMapping("/wallet/get")
 	@ResponseBody
 	public Result getWallet() {
+		//直接调用服务获取到所有的钱包集合
 		return Result.Success("查询到所有钱包", blockService.getMyWalletMap().values());
 	}
 	
@@ -77,14 +81,19 @@ public class ChainController {
 	@PostMapping("/mine")
 	@ResponseBody
 	public Result mine(String address) {
+		//通过钱包地址获取到这个地址的钱包对象
 		Wallet myWallet = blockService.getMyWalletMap().get(address);
+		//有效性验证
 		if(myWallet == null) {
 			return Result.Mistake("指定的钱包不存在");
 		}
+		//调用接口开始挖矿
 		Block newBlock = blockService.mine(address);
+		//有效性验证
 		if(newBlock == null) {
 			return Result.Mistake("挖矿失败,可能有其他节点已经挖出此块");
 		}
+		//将新的区块通过p2p广播出去
 		Block[] blocks = {newBlock};
 		String msg = JSON.toJSONString(new Message(P2PService.RESPONSE_BLOCKCHAIN, JSON.toJSONString(blocks)));
 		p2pService.broatcast(msg);
@@ -106,10 +115,10 @@ public class ChainController {
 			recipientWallet = blockService.getOtherWalletMap().get(recipient);
 		}
 		
+		//有效性验证
 		if(senderWallet == null) {
 			return Result.Mistake("发送方钱包不存在");
 		}
-		
 		if(recipientWallet == null) {
 			return Result.Mistake("接收方钱包不存在");
 		}
@@ -148,6 +157,7 @@ public class ChainController {
 	@GetMapping("/wallet/balance/get")
 	@ResponseBody
 	public Result getWalletBalance(String address) {
+		//直接调用服务查询address钱包地址的余额
 		return Result.Success("查询出了钱包余额", blockService.getWalletBalance(address));
 	}
 	
@@ -158,6 +168,7 @@ public class ChainController {
 	@GetMapping("/peers")
 	@ResponseBody
 	public Result peers() {
+		//通过p2p服务查询到所有socket连接地址和端口
 		List<String> socketAddressList = new ArrayList<String>();
 		for (WebSocket socket : p2pService.getSockets()) {
 			InetSocketAddress remoteSocketAddress = socket.getRemoteSocketAddress();
