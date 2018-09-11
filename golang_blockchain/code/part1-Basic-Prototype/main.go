@@ -6,6 +6,12 @@ import (
 )
 
 func main() {
-    block := BLC.CreateGenesisBlock("Gensis first block")
-    fmt.Println(block)
+    
+    genesisBlockChain := BLC.CreateBlockchainWithGenesisBlock()
+
+    fmt.Println(genesisBlockChain)
+
+    fmt.Println(genesisBlockChain.Blocks)
+
+    fmt.Println(genesisBlockChain.Blocks[0])
 }
