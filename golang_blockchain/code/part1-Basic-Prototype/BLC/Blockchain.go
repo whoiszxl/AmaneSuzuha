@@ -2,15 +2,26 @@ package BLC
 
 //区块链结构体
 type Blockchain struct {
-	Blocks []*Block //存储有序的区块
+    Blocks []*Block //存储有序的区块
+}
+
+
+//添加新的区块到区块链中
+func (blc *Blockchain) AddBlockToBlockchain(data string, height int64, preHash []byte) {
+    
+    //创建新区块
+    newBlock := NewBlock(data, height, preHash)
+    
+    //往公链添加区块
+    blc.Blocks = append(blc.Blocks, newBlock)
 }
 
 
 //创建带有创世区块的区块链
 func CreateBlockchainWithGenesisBlock() *Blockchain {
-	//创建创世区块
-	genesisBlock := CreateGenesisBlock("Genesis frist block...")
+    //创建创世区块
+    genesisBlock := CreateGenesisBlock("Genesis frist block...")
 
-	//返回区块链对象
-	return &Blockchain{ []*Block{genesisBlock}}
+    //返回区块链对象
+    return &Blockchain{ []*Block{genesisBlock}}
 }
