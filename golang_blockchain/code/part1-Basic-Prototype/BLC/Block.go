@@ -7,6 +7,7 @@ import (
     "crypto/sha256"
 )
 
+//区块结构体
 type Block struct {
 
     //1. 区块高度
@@ -21,7 +22,7 @@ type Block struct {
     Hash []byte
 }
 
-//TODO 求hash值
+//求hash值
 func (block *Block) SetHash() {
 
     //1. Height转[]byte
@@ -40,6 +41,7 @@ func (block *Block) SetHash() {
     block.Hash = hash[:]
 }
 
+//创建一个新的区块
 func NewBlock(data string, height int64, prevBlockHash []byte) *Block {
     //1. 创建区块
     block := &Block{height, prevBlockHash, []byte(data), time.Now().Unix(), nil}
@@ -48,4 +50,8 @@ func NewBlock(data string, height int64, prevBlockHash []byte) *Block {
     block.SetHash()
 
     return block
+}
+
+func CreateGenesisBlock(data string) *Block {
+    return NewBlock(data,1,[]byte{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0})
 }
