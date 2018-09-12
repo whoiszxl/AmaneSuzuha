@@ -2,6 +2,9 @@ package BLC
 
 import (
     "time"
+	"bytes"
+	"encoding/gob"
+	"log"
 )
 
 //区块结构体
@@ -19,6 +22,32 @@ type Block struct {
     Hash []byte
     //6. Nonce工作量证明随机数
     Nonce int64
+}
+
+
+//序列化区块
+func (block *Block) Serialize() []byte {
+    var result bytes.Buffer
+
+    encoder := gob.NewEncoder(&result)
+    err := encoder.Encode(block)
+    if err != nil {
+        log.Panic(err)
+    }
+    return result.Bytes()
+}
+
+
+//反序列化区块
+func DeserializeBlock(blockBytes []byte) *Block {
+    var block Block
+
+    decoder := gob.NewDecoder(bytes.NewReader(blockBytes))
+    err := decoder.Decode(&block)
+    if err != nil {
+        log.Panic(err)
+    }
+    return &block
 }
 
 

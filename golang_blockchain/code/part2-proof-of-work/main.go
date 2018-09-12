@@ -18,7 +18,9 @@ func main() {
 
     blockchain.AddBlockToBlockchain("Send 50RMB To flower",blockchain.Blocks[len(blockchain.Blocks) - 1].Height + 1,blockchain.Blocks[len(blockchain.Blocks) - 1].Hash)
 
-    fmt.Println(blockchain)
 
-    fmt.Println(blockchain.Blocks)
+    serBlock := blockchain.Blocks[0].Serialize()
+
+
+    fmt.Println(BLC.DeserializeBlock(serBlock))
 }

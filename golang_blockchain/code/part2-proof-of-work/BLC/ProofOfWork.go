@@ -4,7 +4,6 @@ import (
     "math/big"
     "bytes"
     "crypto/sha256"
-    "fmt"
 )
 
 //256位hash里面前面至少需要有8个0
@@ -80,7 +79,7 @@ func (proofOfWork *ProofOfWork) Run() ([]byte, int64) {
 
         nonce = nonce + 1
     }
-    fmt.Printf("\r%x",hash)
+    //fmt.Printf("\r%x",hash)
     return hash[:],int64(nonce)
 }
 
