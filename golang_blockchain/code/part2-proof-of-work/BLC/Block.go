@@ -2,9 +2,6 @@ package BLC
 
 import (
     "time"
-    "strconv"
-    "bytes"
-    "crypto/sha256"
 )
 
 //区块结构体
@@ -24,24 +21,6 @@ type Block struct {
     Nonce int64
 }
 
-//求hash值
-func (block *Block) SetHash() {
-
-    //1. Height转[]byte
-    heightBytes := IntToHex(block.Height)
-
-    //2. 时间戳转[]byte
-    timeString := strconv.FormatInt(block.Timestamp, 2)
-    timeBytes := []byte(timeString)
-
-    //3. 拼接所有属性
-    blockBytes := bytes.Join([][]byte{heightBytes,block.PrevBlockHash,block.Data,timeBytes},[]byte{})
-
-    //4. 生成hash
-    hash := sha256.Sum256(blockBytes)
-
-    block.Hash = hash[:]
-}
 
 //创建一个新的区块
 func NewBlock(data string, height int64, prevBlockHash []byte) *Block {

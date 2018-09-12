@@ -7,8 +7,8 @@ import (
     "fmt"
 )
 
-//256位hash里面前面至少需要有16个0
-const targetBit = 3
+//256位hash里面前面至少需要有8个0
+const targetBit = 8
 
 
 type ProofOfWork struct {
@@ -33,6 +33,28 @@ func (pow *ProofOfWork) prepareData(nonce int) []byte {
     return data
 }
 
+//校验工作量证明对象是否有效
+func (proofOfWork *ProofOfWork) IsValid() bool {
+
+	//1.proofOfWork.Block.Hash
+    //2.proofOfWork.Target
+    
+	var hashInt big.Int
+	// []byte 转 Int
+	hashInt.SetBytes(proofOfWork.Block.Hash)
+
+
+	// Cmp compares x and y and returns:
+	//
+	//   -1 if x <  y
+	//    0 if x == y
+	//   +1 if x >  y
+	if proofOfWork.target.Cmp(&hashInt) == 1 {
+		return true
+	}
+
+	return false
+}
 
 //工作量实际计算
 func (proofOfWork *ProofOfWork) Run() ([]byte, int64) {
