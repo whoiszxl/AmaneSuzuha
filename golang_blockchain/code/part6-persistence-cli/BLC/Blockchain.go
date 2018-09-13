@@ -73,7 +73,7 @@ func (blc *Blockchain) AddBlockToBlockchain(data string)  {
 		//2. 创建新区块
 		if b != nil {
 
-			// ⚠️，先获取最新区块
+			// 先获取最新区块
 			blockBytes := b.Get(blc.Tip)
 			// 反序列化
 			block := DeserializeBlock(blockBytes)
@@ -103,82 +103,76 @@ func (blc *Blockchain) AddBlockToBlockchain(data string)  {
 
 
 //创建带有创世区块的区块链
-func CreateBlockchainWithGenesisBlock() *Blockchain {
+func CreateBlockchainWithGenesisBlock(data string) {
 
+    //判断数据库是否存在
     if dbExists() {
-        fmt.Println("创世区块已经存在......")
+        fmt.Println("创世区块链已经存在......")
+        os.Exit(1)
+    }
 
-        db, err := bolt.Open(dbName, 0600, nil)
-		if err != nil {
-			log.Fatal(err)
-		}
+    fmt.Println("正在创建创世区块.......")
 
-		var blockchain *Blockchain
+    //创建或打开数据库
+    db, err := bolt.Open(dbName, 0600, nil)
+    if err != nil {
+        log.Fatal(err)
+    }
 
-		err = db.View(func(tx *bolt.Tx) error{
+    err = db.Update(func(tx *bolt.Tx) error{
 
-			b := tx.Bucket([]byte(blockTableName))
-
-			hash := b.Get([]byte("l"))
-
-			blockchain = &Blockchain{hash,db}
-
-			return nil
-		})
+        // 创建数据库表
+		b, err := tx.CreateBucket([]byte(blockTableName))
 
 		if err != nil {
 			log.Panic(err)
 		}
 
-		return blockchain
+		if b != nil {
+			// 创建创世区块
+			genesisBlock := CreateGenesisBlock(data)
+			// 将创世区块存储到表中
+			err := b.Put(genesisBlock.Hash, genesisBlock.Serialize())
+			if err != nil {
+				log.Panic(err)
+			}
 
-    }
+			// 存储最新的区块的hash
+			err = b.Put([]byte("l"), genesisBlock.Hash)
+			if err != nil {
+				log.Panic(err)
+			}
+		}
 
-    //1. 创建or打开数据库
-    db, err := bolt.Open(dbName, 0600, nil)
-    if err != nil {
-        log.Fatal(err)
-    }
-    
-    var blockHash []byte
-
-    err = db.Update(func(tx *bolt.Tx) error{
-
-        //先获取表看下是否存在
-        b := tx.Bucket([]byte(blockTableName))
-        if b == nil {
-            //创建数据库
-            b, err = tx.CreateBucket([]byte(blockTableName))
-
-            if err != nil {
-                log.Panic(err)
-            }
-        }
-
-        
-
-        if b != nil {
-            //创建创世区块
-            genesisBlock := CreateGenesisBlock("Genesis frist block...")
-            
-            //将创世区块存储到表中
-            err := b.Put(genesisBlock.Hash,genesisBlock.Serialize())
-            if err != nil {
-                log.Panic(err)
-            }
-            
-            // 存储最新的区块的hash
-            err = b.Put([]byte("l"),genesisBlock.Hash)
-            if err != nil {
-                log.Panic(err)
-            }
-
-            blockHash = genesisBlock.Hash
-        }
-
-        return nil
+		return nil
     })
+}
 
-    //返回区块链对象
-    return &Blockchain{blockHash,db}
+// 返回Blockchain对象
+func BlockchainObject() *Blockchain {
+
+    //打开数据库
+	db, err := bolt.Open(dbName, 0600, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	var tip []byte
+
+	err = db.View(func(tx *bolt.Tx) error {
+
+        //获取bucket表读取到最新区块的hash值
+		b := tx.Bucket([]byte(blockTableName))
+
+		if b != nil {
+			// 读取最新区块的Hash
+			tip = b.Get([]byte("l"))
+
+		}
+
+		return nil
+	})
+
+    //返回一个带有最新区块hash的区块链对象
+	return &Blockchain{tip,db}
 }
