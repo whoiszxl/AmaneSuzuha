@@ -25,39 +25,6 @@ func (blockchain *Blockchain) Iterator() *BlockchainIterator {
     return &BlockchainIterator{blockchain.Tip, blockchain.DB}
 }
 
-//迭代器结构
-type BlockchainIterator struct {
-	CurrentHash []byte
-	DB  *bolt.DB
-}
-
-//迭代器获取下一个区块的方法
-func (blockchainIterator *BlockchainIterator) Next() *Block {
-    var block *Block
-
-    err := blockchainIterator.DB.View(func(tx *bolt.Tx) error{
-        //打开表
-        b := tx.Bucket([]byte(blockTableName))
-
-        if b != nil {
-            //获取到当前迭代器里面的currentHash所对应的区块
-            currentBlockBytes := b.Get(blockchainIterator.CurrentHash)
-            block = DeserializeBlock(currentBlockBytes)
-
-            //更新迭代器里面的CurrentHash
-            blockchainIterator.CurrentHash = block.PrevBlockHash
-        }
-
-        return nil
-    })
-
-    if err != nil {
-        log.Panic(err)
-    }
-
-    return block
-}
-
 
 //遍历输出所有的区块
 func (blc *Blockchain) PrintChain() {
