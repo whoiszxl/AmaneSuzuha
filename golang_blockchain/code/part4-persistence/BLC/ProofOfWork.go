@@ -72,6 +72,8 @@ func (proofOfWork *ProofOfWork) Run() ([]byte, int64) {
         hash = sha256.Sum256(dataBytes)
         fmt.Printf("\r%x",hash)
 
+        fmt.Println()
+
         //3. 判断hash是否有效,判断hashInt是否小于Block里面的target
         hashInt.SetBytes(hash[:])
         if proofOfWork.target.Cmp(&hashInt) == 1 {
