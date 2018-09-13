@@ -9,5 +9,9 @@ func main() {
     blockchain := BLC.CreateBlockchainWithGenesisBlock()
     defer blockchain.DB.Close()
 
-    blockchain.AddBlockToBlockchain("hello 1")
+    blockchain.AddBlockToBlockchain("hello rose one")
+    blockchain.AddBlockToBlockchain("hello jack two")
+    blockchain.AddBlockToBlockchain("hello hins three")
+
+    blockchain.PrintChain()
 }

@@ -8,7 +8,7 @@ import (
 )
 
 //256位hash里面前面至少需要有8个0
-const targetBit = 20
+const targetBit = 5
 
 
 type ProofOfWork struct {
