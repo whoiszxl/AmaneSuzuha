@@ -18,13 +18,43 @@ type Blockchain struct {
 }
 
 
-//添加新的区块到区块链中
-// func (blc *Blockchain) AddBlockToBlockchain(data string, height int64, preHash []byte) {
-//     //创建新区块
-//     newBlock := NewBlock(data, height, preHash) 
-//     //往公链添加区块
-//     blc.Blocks = append(blc.Blocks, newBlock)
-// }
+//// 增加区块到区块链里面
+func (blc *Blockchain) AddBlockToBlockchain(data string)  {
+
+	err := blc.DB.Update(func(tx *bolt.Tx) error{
+
+		//1. 获取表
+		b := tx.Bucket([]byte(blockTableName))
+		//2. 创建新区块
+		if b != nil {
+
+			// ⚠️，先获取最新区块
+			blockBytes := b.Get(blc.Tip)
+			// 反序列化
+			block := DeserializeBlock(blockBytes)
+
+			//3. 将区块序列化并且存储到数据库中
+			newBlock := NewBlock(data,block.Height + 1,block.Hash)
+			err := b.Put(newBlock.Hash,newBlock.Serialize())
+			if err != nil {
+				log.Panic(err)
+			}
+			//4. 更新数据库里面"l"对应的hash
+			err = b.Put([]byte("l"),newBlock.Hash)
+			if err != nil {
+				log.Panic(err)
+			}
+			//5. 更新blockchain的Tip
+			blc.Tip = newBlock.Hash
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		log.Panic(err)
+	}
+}
 
 
 //创建带有创世区块的区块链
@@ -39,14 +69,21 @@ func CreateBlockchainWithGenesisBlock() *Blockchain {
     var blockHash []byte
 
     err = db.Update(func(tx *bolt.Tx) error{
-        //创建数据库
-        b, err := tx.CreateBucket([]byte(blockTableName))
 
-        if err != nil {
-            log.Panic(err)
+        //先获取表看下是否存在
+        b := tx.Bucket([]byte(blockTableName))
+        if b == nil {
+            //创建数据库
+            b, err = tx.CreateBucket([]byte(blockTableName))
+
+            if err != nil {
+                log.Panic(err)
+            }
         }
 
-        if b == nil {
+        
+
+        if b != nil {
             //创建创世区块
             genesisBlock := CreateGenesisBlock("Genesis frist block...")
             

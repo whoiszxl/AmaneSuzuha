@@ -30,3 +30,5 @@ target
 .project
 debug
 .vscode
+*.db
+*.db.lock

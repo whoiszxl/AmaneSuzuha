@@ -7,6 +7,7 @@ import (
 func main() {
     
     blockchain := BLC.CreateBlockchainWithGenesisBlock()
-
     defer blockchain.DB.Close()
+
+    blockchain.AddBlockToBlockchain("hello 1")
 }
