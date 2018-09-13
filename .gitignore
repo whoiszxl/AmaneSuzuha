@@ -32,3 +32,4 @@ debug
 .vscode
 *.db
 *.db.lock
+main.exe
