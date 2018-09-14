@@ -25,7 +25,7 @@ type Transaction struct {
 func NewCoinbaseTransaction(address string) *Transaction {
 
 	//代表消费
-	txInput := &TXInput{[]byte{}, -1, "Genesis Data"}
+	txInput := &TXInput{[]byte{}, -1, "coinbase...."}
 
 	//代表收入
 	txOutput := &TXOutput{10, address}

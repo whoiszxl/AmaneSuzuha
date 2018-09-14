@@ -194,3 +194,41 @@ func BlockchainObject() *Blockchain {
     //返回一个带有最新区块hash的区块链对象
 	return &Blockchain{tip,db}
 }
+
+
+//挖新的区块
+func (blockchain *Blockchain) MineNewBlock(from []string, to []string, amount []string) {
+	fmt.Println("---------开始挖矿--------")
+	fmt.Println(from)
+	fmt.Println(to)
+	fmt.Println(amount)
+
+	//1. 通过相关算法创建Transaction数组
+	var txs []*Transaction
+
+	var block *Block
+	blockchain.DB.View(func(tx *bolt.Tx) error{
+		b := tx.Bucket([]byte(blockTableName))
+		if b != nil {
+			hash := b.Get([]byte("l"))
+			blockBytes := b.Get(hash)
+			block = DeserializeBlock(blockBytes)
+		}
+		return nil
+	})
+
+	//2. 创建新的区块
+	block = NewBlock(txs, block.Height+1, block.Hash)
+
+	//3. 将新区块存储到数据库
+	blockchain.DB.Update(func(tx *bolt.Tx) error{
+		b := tx.Bucket([]byte(blockTableName))
+		if b != nil {
+			b.Put(block.Hash, block.Serialize())
+			b.Put([]byte("l"), block.Hash)
+			blockchain.Tip = block.Hash
+		}
+
+		return nil
+	})
+}
