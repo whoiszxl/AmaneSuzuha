@@ -1,31 +1,31 @@
 package BLC
 
 import (
-	"encoding/hex"
-	"strconv"
+	"github.com/boltdb/bolt"
+	"log"
+	"fmt"
 	"math/big"
-    "github.com/boltdb/bolt"
-    "log"
-    "fmt"
-    "time"
-    "os"
+	"time"
+	"os"
+	"strconv"
+	"encoding/hex"
 )
 
-//数据库名称
+// 数据库名字
 const dbName = "blockchain.db"
-//表名
+
+// 表的名字
 const blockTableName = "blocks"
 
-
-//区块链结构体
 type Blockchain struct {
-    Tip []byte //最新的区块的Hash
-    DB *bolt.DB
+	Tip []byte //最新的区块的Hash
+	DB  *bolt.DB
 }
 
-//区块链初始化迭代器的方法
+// 迭代器
 func (blockchain *Blockchain) Iterator() *BlockchainIterator {
-    return &BlockchainIterator{blockchain.Tip, blockchain.DB}
+
+	return &BlockchainIterator{blockchain.Tip, blockchain.DB}
 }
 
 // 判断数据库是否存在
@@ -33,76 +33,75 @@ func DBExists() bool {
 	if _, err := os.Stat(dbName); os.IsNotExist(err) {
 		return false
 	}
+
 	return true
 }
 
+// 遍历输出所有区块的信息
+func (blc *Blockchain) Printchain()  {
 
-//遍历输出所有的区块
-func (blc *Blockchain) PrintChain() {
+	blcIterator := blc.Iterator()
 
-    blockchainIterator := blc.Iterator()
+	for  {
 
-    for {
-        block := blockchainIterator.Next()
+		block := blcIterator.Next()
 
-        fmt.Printf("Height：%d\n",block.Height)
+		fmt.Printf("Height：%d\n",block.Height)
 		fmt.Printf("PrevBlockHash：%x\n",block.PrevBlockHash)
 		fmt.Printf("Timestamp：%s\n",time.Unix(block.Timestamp, 0).Format("2006-01-02 03:04:05 PM"))
 		fmt.Printf("Hash：%x\n",block.Hash)
-        fmt.Printf("Nonce：%d\n",block.Nonce)
-		fmt.Printf("Txs::")
-		//循环打印交易输入和输出
+		fmt.Printf("Nonce：%d\n",block.Nonce)
+		fmt.Println("-----------------------")
 		for _,tx := range block.Txs {
-			fmt.Printf("%x\n",tx.TxHash)
-			fmt.Println("Vins:")
-			for _,in := range tx.Vins  {
-				fmt.Printf("%x\n",in.TxHash)
-				fmt.Printf("%d\n",in.Vout)
-				fmt.Printf("%s\n",in.ScriptSig)
+			fmt.Println("当前交易的Hash")
+			fmt.Println(hex.EncodeToString(tx.TxHash))
+			fmt.Println("已花费的TXOuput的相关记录")
+			for _,in := range tx.Vins {
+				fmt.Printf("TxHash:%s\tVout:%d\tScriptSig:%s\n",hex.EncodeToString(in.TxHash),in.Vout,in.ScriptSig)
+			}
+			fmt.Println("Vout: - TXOutput")
+			for _,out := range tx.Vouts{
+				fmt.Printf("Value: %d\tScriptPubKey:%s\n",out.Value,out.ScriptPubKey)
 			}
 
-			fmt.Println("Vouts:")
-			for _,out := range tx.Vouts  {
-				fmt.Println(out.Value)
-				fmt.Println(out.ScriptPubKey)
-			}
 		}
-		fmt.Println("-----------------------------------------------")
 
-        var hashInt big.Int
-        hashInt.SetBytes(block.PrevBlockHash)
 
-        // 【-1 if x < y】 【0 if x == y】 【+1 if x > y】
-        if big.NewInt(0).Cmp(&hashInt) == 0 {
-            break;
-        }
-    }
+		fmt.Println("-----------------------\n")
 
+		var hashInt big.Int
+		hashInt.SetBytes(block.PrevBlockHash)
+
+		if big.NewInt(0).Cmp(&hashInt) == 0 {
+			break;
+		}
+
+	}
 }
 
-// 增加区块到区块链里面
+//// 增加区块到区块链里面
 func (blc *Blockchain) AddBlockToBlockchain(txs []*Transaction) {
 
-	err := blc.DB.Update(func(tx *bolt.Tx) error{
+	err := blc.DB.Update(func(tx *bolt.Tx) error {
 
 		//1. 获取表
 		b := tx.Bucket([]byte(blockTableName))
 		//2. 创建新区块
 		if b != nil {
 
-			// 先获取最新区块
+			// ⚠️，先获取最新区块
 			blockBytes := b.Get(blc.Tip)
 			// 反序列化
 			block := DeserializeBlock(blockBytes)
 
 			//3. 将区块序列化并且存储到数据库中
-			newBlock := NewBlock(txs,block.Height + 1,block.Hash)
-			err := b.Put(newBlock.Hash,newBlock.Serialize())
+			newBlock := NewBlock(txs, block.Height+1, block.Hash)
+			err := b.Put(newBlock.Hash, newBlock.Serialize())
 			if err != nil {
 				log.Panic(err)
 			}
 			//4. 更新数据库里面"l"对应的hash
-			err = b.Put([]byte("l"),newBlock.Hash)
+			err = b.Put([]byte("l"), newBlock.Hash)
 			if err != nil {
 				log.Panic(err)
 			}
@@ -118,29 +117,29 @@ func (blc *Blockchain) AddBlockToBlockchain(txs []*Transaction) {
 	}
 }
 
-
-//创建带有创世区块的区块链
+//1. 创建带有创世区块的区块链
 func CreateBlockchainWithGenesisBlock(address string) *Blockchain {
 
-    //判断数据库是否存在
-    if DBExists() {
-        fmt.Println("创世区块链已经存在......")
-        os.Exit(1)
-    }
-
-    fmt.Println("正在创建创世区块.......")
-
-    //创建或打开数据库
-    db, err := bolt.Open(dbName, 0600, nil)
-    if err != nil {
-        log.Fatal(err)
+	// 判断数据库是否存在
+	if DBExists() {
+		fmt.Println("创世区块已经存在.......")
+		os.Exit(1)
 	}
-	
+
+	fmt.Println("正在创建创世区块.......")
+
+	// 创建或者打开数据库
+	db, err := bolt.Open(dbName, 0600, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	var genesisHash []byte
 
-    err = db.Update(func(tx *bolt.Tx) error{
+	// 关闭数据库
+	err = db.Update(func(tx *bolt.Tx) error {
 
-        // 创建数据库表
+		// 创建数据库表
 		b, err := tx.CreateBucket([]byte(blockTableName))
 
 		if err != nil {
@@ -148,10 +147,10 @@ func CreateBlockchainWithGenesisBlock(address string) *Blockchain {
 		}
 
 		if b != nil {
-			//创建一个coinbase交易
+			// 创建创世区块
+			// 创建了一个coinbase Transaction
 			txCoinbase := NewCoinbaseTransaction(address)
 
-			// 创建创世区块
 			genesisBlock := CreateGenesisBlock([]*Transaction{txCoinbase})
 			// 将创世区块存储到表中
 			err := b.Put(genesisBlock.Hash, genesisBlock.Serialize())
@@ -164,19 +163,20 @@ func CreateBlockchainWithGenesisBlock(address string) *Blockchain {
 			if err != nil {
 				log.Panic(err)
 			}
+
 			genesisHash = genesisBlock.Hash
 		}
 
 		return nil
 	})
-	
+
 	return &Blockchain{genesisHash, db}
+
 }
 
 // 返回Blockchain对象
 func BlockchainObject() *Blockchain {
 
-    //打开数据库
 	db, err := bolt.Open(dbName, 0600, nil)
 	if err != nil {
 		log.Fatal(err)
@@ -186,7 +186,6 @@ func BlockchainObject() *Blockchain {
 
 	err = db.View(func(tx *bolt.Tx) error {
 
-        //获取bucket表读取到最新区块的hash值
 		b := tx.Bucket([]byte(blockTableName))
 
 		if b != nil {
@@ -198,10 +197,8 @@ func BlockchainObject() *Blockchain {
 		return nil
 	})
 
-    //返回一个带有最新区块hash的区块链对象
-	return &Blockchain{tip,db}
+	return &Blockchain{tip, db}
 }
-
 
 // 如果一个地址对应的TXOutput未花费，那么这个Transaction就应该添加到数组中返回
 func (blockchain *Blockchain) UnUTXOs(address string,txs []*Transaction) []*UTXO {
@@ -411,10 +408,9 @@ func (blockchain *Blockchain) FindSpendableUTXOS(from string, amount int,txs []*
 	return value, spendableUTXO
 }
 
-
-
-//挖新的区块
+// 挖掘新的区块
 func (blockchain *Blockchain) MineNewBlock(from []string, to []string, amount []string) {
+
 	//	$ ./bc send -from '["juncheng"]' -to '["zhangqiang"]' -amount '["2"]'
 	//	[juncheng]
 	//	[zhangqiang]
@@ -473,6 +469,7 @@ func (blockchain *Blockchain) MineNewBlock(from []string, to []string, amount []
 		}
 		return nil
 	})
+
 }
 
 // 查询余额
@@ -482,7 +479,7 @@ func (blockchain *Blockchain) GetBalance(address string) int64 {
 
 	var amount int64
 
-	for _,utxo := range utxos {
+	for _, utxo := range utxos {
 
 		amount = amount + utxo.Output.Value
 	}

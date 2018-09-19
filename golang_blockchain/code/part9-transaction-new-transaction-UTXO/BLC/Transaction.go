@@ -46,7 +46,7 @@ func NewCoinbaseTransaction(address string) *Transaction {
 }
 
 //2. 转账时候产生的Transaction
-func NewSimpleTransaction(from string, to string, amount int) *Transaction {
+func NewSimpleTransaction(from string,to string,amount int,blockchain *Blockchain,txs []*Transaction) *Transaction {
 
 	//$ ./main.exe send -from '["flower"]' -to '["rose"]' -amount '["10"]'
 
@@ -55,25 +55,31 @@ func NewSimpleTransaction(from string, to string, amount int) *Transaction {
 
 	// fmt.Println(unSpentTx)
 
-	var txInputs []*TXInput
+	// 通过一个函数，返回
+	money,spendableUTXODic := blockchain.FindSpendableUTXOS(from,amount,txs)
+
+	var txIntputs []*TXInput
 	var txOutputs []*TXOutput
 
-	// //代表消费
-	bytes ,_ := hex.DecodeString("cea12d33b2e7083221bf3401764fb661fd6c34fab50f5460e77628c42ca0e92b")
-	txInput := &TXInput{bytes, 0, from}
+	for txHash,indexArray := range spendableUTXODic  {
 
-	// //消费
-	txInputs = append(txInputs, txInput)
+		txHashBytes,_ := hex.DecodeString(txHash)
+		for _,index := range indexArray  {
+			txInput := &TXInput{txHashBytes,index,from}
+			txIntputs = append(txIntputs,txInput)
+		}
+
+	}
 
 	// //转账
 	txOutput := &TXOutput{int64(amount), to}
 	txOutputs = append(txOutputs, txOutput)
 
 	// //找零
-	txOutput = &TXOutput{ 10 - int64(amount), from }
+	txOutput = &TXOutput{ int64(money) - int64(amount),from }
 	txOutputs = append(txOutputs, txOutput)
 
-	tx := &Transaction{ []byte{}, txInputs, txOutputs }
+	tx := &Transaction{ []byte{}, txIntputs, txOutputs }
 
 	//设置hash
 	tx.HashTransaction()
